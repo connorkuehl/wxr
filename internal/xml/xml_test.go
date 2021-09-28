@@ -49,3 +49,44 @@ func TestDecodeAuthor(t *testing.T) {
 		})
 	}
 }
+
+const (
+	categoryValidFragment = `
+	<wp:category>
+		<wp:term_id>16</wp:term_id>
+		<wp:category_nicename>category-nice-name</wp:category_nicename>
+		<wp:category_parent></wp:category_parent>
+		<wp:cat_name>A Category</wp:cat_name>
+	</wp:category>`
+)
+
+func TestDecodeCategory(t *testing.T) {
+	tests := []struct {
+		name string
+		in   string
+		want Category
+	}{
+		{"valid category fragment", categoryValidFragment, Category{
+			XMLName:  xml.Name{Space: "wp", Local: "category"},
+			TermID:   16,
+			NiceName: "category-nice-name",
+			Parent:   "",
+			Name:     "A Category"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var got Category
+			err := xml.Unmarshal([]byte(tt.in), &got)
+			if err != nil {
+				t.Errorf("xml.Unmarshal failed for %s: %s", tt.name, err)
+				return
+			}
+
+			if got != tt.want {
+				t.Errorf("xml.Unmarshal got %+v, want %+v", got, tt.want)
+			}
+		})
+	}
+}

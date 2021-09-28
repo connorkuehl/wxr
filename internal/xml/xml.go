@@ -11,3 +11,11 @@ type Author struct {
 	FirstName   string   `xml:"author_first_name"`
 	LastName    string   `xml:"author_last_name"`
 }
+
+type Category struct {
+	XMLName  xml.Name `xml:"category"`
+	TermID   int      `xml:"term_id"`
+	NiceName string   `xml:"category_nicename"`
+	Parent   string   `xml:"category_parent"`
+	Name     string   `xml:"cat_name"`
+}
