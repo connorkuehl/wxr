@@ -38,11 +38,6 @@ type Channel struct {
 	Items       []Item     `xml:"item"`
 }
 
-type Document struct {
-	Prologue Prologue `xml:"xml"`
-	RSS      RSS      `xml:"rss"`
-}
-
 type GUID struct {
 	XMLName     xml.Name `xml:"guid"`
 	IsPermaLink string   `xml:"isPermaLink,attr"`
@@ -86,12 +81,6 @@ type PostMeta struct {
 	XMLName xml.Name `xml:"wp postmeta"`
 	Key     string   `xml:"wp meta_key"`
 	Value   string   `xml:"wp meta_value"`
-}
-
-type Prologue struct {
-	XMLName  xml.Name `xml:"xml"`
-	Version  string   `xml:"version,attr"`
-	Encoding string   `xml:"encoding,attr"`
 }
 
 type RSS struct {
