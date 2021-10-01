@@ -1,4 +1,4 @@
-package xml
+package wxr
 
 import (
 	"encoding/xml"
@@ -96,8 +96,6 @@ const itemValidFragment = `
 			<dc:creator>CreatorPerson</dc:creator>
 			<guid isPermaLink="false">example.com</guid>
 			<description>desc</description>
-			<content:encoded>empty</content:encoded>
-			<excerpt:encoded>empty</excerpt:encoded>
 			<post_id>9</post_id>
 			<post_date>2021-08-07 07:56:40</post_date>
 			<post_date_gmt>2020-11-29 16:29:33</post_date_gmt>
@@ -138,8 +136,6 @@ func TestItem(t *testing.T) {
 			Creator:         "CreatorPerson",
 			GUID:            GUID{XMLName: xml.Name{Local: "guid"}, IsPermaLink: "false"},
 			Description:     "desc",
-			Content:         "empty",
-			Excerpt:         "empty",
 			PostID:          9,
 			PostDate:        "2021-08-07 07:56:40",
 			PostDateGMT:     "2020-11-29 16:29:33",
