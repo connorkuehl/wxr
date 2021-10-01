@@ -68,13 +68,17 @@ type Item struct {
 	GUID        GUID     `xml:"guid"`
 	Description string   `xml:"description"`
 
-	/* FIXME: there should technically be an excerpt:encoded
-	   and content:encoded node here. I couldn't get unmarshalling
-	   to work properly with that though, i.e.:
+	// FIXME: Using these URLs here is brittle. If WordPress ever changes
+	// the URLs associated with content or excerpt this will break. However,
+	// I can't get the namespace shortnames to work here:
+	//
+	// `xml:"content encoded"`
+	// `xml:"excerpt encoded"`
+	//
+	// Despite these being set in the top-level <rss> tag.
+	Content Content `xml:"http://purl.org/rss/1.0/modules/content/ encoded"`
+	Excerpt Excerpt `xml:"http://wordpress.org/export/1.2/excerpt/ encoded"`
 
-	   Content: Content `xml:"content encoded"`
-	   Excerpt: Excerpt `xml:"excerpt encoded"` */
-	Content         []Content    `xml:"encoded"`
 	PostID          int          `xml:"post_id"`
 	PostDate        string       `xml:"post_date"`
 	PostDateGMT     string       `xml:"post_date_gmt"`
