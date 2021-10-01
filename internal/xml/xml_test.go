@@ -7,14 +7,14 @@ import (
 )
 
 const authorValidFragment = `
-	<wp:author>
-		<wp:author_id>1</wp:author_id>
-		<wp:author_login>example_author</wp:author_login>
-		<wp:author_email>example_author@example.com</wp:author_email>
-		<wp:author_display_name>ExamplusAuthorius99</wp:author_display_name>
-		<wp:author_first_name>Examplus</wp:author_first_name>
-		<wp:author_last_name>Authorious</wp:author_last_name>
-	</wp:author>`
+	<author>
+		<author_id>1</author_id>
+		<author_login>example_author</author_login>
+		<author_email>example_author@example.com</author_email>
+		<author_display_name>ExamplusAuthorius99</author_display_name>
+		<author_first_name>Examplus</author_first_name>
+		<author_last_name>Authorious</author_last_name>
+	</author>`
 
 func TestDecodeAuthor(t *testing.T) {
 	tests := []struct {
@@ -23,7 +23,7 @@ func TestDecodeAuthor(t *testing.T) {
 		want Author
 	}{
 		{"valid author fragment", authorValidFragment, Author{
-			XMLName:     xml.Name{Space: "wp", Local: "author"},
+			XMLName:     xml.Name{Local: "author"},
 			ID:          1,
 			Login:       "example_author",
 			Email:       "example_author@example.com",
@@ -50,12 +50,12 @@ func TestDecodeAuthor(t *testing.T) {
 }
 
 const categoryValidFragment = `
-	<wp:category>
-		<wp:term_id>16</wp:term_id>
-		<wp:category_nicename>category-nice-name</wp:category_nicename>
-		<wp:category_parent></wp:category_parent>
-		<wp:cat_name>A Category</wp:cat_name>
-	</wp:category>`
+	<category>
+		<term_id>16</term_id>
+		<category_nicename>category-nice-name</category_nicename>
+		<category_parent></category_parent>
+		<cat_name>A Category</cat_name>
+	</category>`
 
 func TestDecodeCategory(t *testing.T) {
 	tests := []struct {
@@ -64,7 +64,7 @@ func TestDecodeCategory(t *testing.T) {
 		want Category
 	}{
 		{"valid category fragment", categoryValidFragment, Category{
-			XMLName:  xml.Name{Space: "wp", Local: "category"},
+			XMLName:  xml.Name{Local: "category"},
 			TermID:   16,
 			NiceName: "category-nice-name",
 			Parent:   "",
@@ -98,29 +98,29 @@ const itemValidFragment = `
 			<description>desc</description>
 			<content:encoded>empty</content:encoded>
 			<excerpt:encoded>empty</excerpt:encoded>
-			<wp:post_id>9</wp:post_id>
-			<wp:post_date>2021-08-07 07:56:40</wp:post_date>
-			<wp:post_date_gmt>2020-11-29 16:29:33</wp:post_date_gmt>
-			<wp:post_modified>2021-08-07 07:56:40</wp:post_modified>
-			<wp:post_modified_gmt>2021-08-07 12:56:40</wp:post_modified_gmt>
-			<wp:comment_status>closed</wp:comment_status>
-			<wp:ping_status>closed</wp:ping_status>
-			<wp:post_name>home</wp:post_name>
-			<wp:status>publish</wp:status>
-			<wp:post_parent>0</wp:post_parent>
-			<wp:menu_order>1</wp:menu_order>
-			<wp:post_type>nav_menu_item</wp:post_type>
-			<wp:post_password>passwd</wp:post_password>
-			<wp:is_sticky>0</wp:is_sticky>
+			<post_id>9</post_id>
+			<post_date>2021-08-07 07:56:40</post_date>
+			<post_date_gmt>2020-11-29 16:29:33</post_date_gmt>
+			<post_modified>2021-08-07 07:56:40</post_modified>
+			<post_modified_gmt>2021-08-07 12:56:40</post_modified_gmt>
+			<comment_status>closed</comment_status>
+			<ping_status>closed</ping_status>
+			<post_name>home</post_name>
+			<status>publish</status>
+			<post_parent>0</post_parent>
+			<menu_order>1</menu_order>
+			<post_type>nav_menu_item</post_type>
+			<post_password>passwd</post_password>
+			<is_sticky>0</is_sticky>
 			<category domain="nav_menu" nicename="main-menu">Main Menu</category>
-			<wp:postmeta>
-				<wp:meta_key>_menu_item_type</wp:meta_key>
-				<wp:meta_value>custom</wp:meta_value>
-			</wp:postmeta>
-			<wp:postmeta>
-				<wp:meta_key>_menu_item_menu_item_parent</wp:meta_key>
-				<wp:meta_value>0</wp:meta_value>
-			</wp:postmeta>
+			<postmeta>
+				<meta_key>_menu_item_type</meta_key>
+				<meta_value>custom</meta_value>
+			</postmeta>
+			<postmeta>
+				<meta_key>_menu_item_menu_item_parent</meta_key>
+				<meta_value>0</meta_value>
+			</postmeta>
 		</item>
 `
 
@@ -156,8 +156,8 @@ func TestItem(t *testing.T) {
 			IsSticky:        0,
 			Category:        ItemCategory{XMLName: xml.Name{Local: "category"}, Domain: "nav_menu", NiceName: "main-menu"},
 			MetaKVs: []PostMeta{
-				{XMLName: xml.Name{Space: "wp", Local: "postmeta"}, Key: "_menu_item_type", Value: "custom"},
-				{XMLName: xml.Name{Space: "wp", Local: "postmeta"}, Key: "_menu_item_menu_item_parent", Value: "0"},
+				{XMLName: xml.Name{Local: "postmeta"}, Key: "_menu_item_type", Value: "custom"},
+				{XMLName: xml.Name{Local: "postmeta"}, Key: "_menu_item_menu_item_parent", Value: "0"},
 			},
 		}},
 	}
@@ -180,10 +180,10 @@ func TestItem(t *testing.T) {
 }
 
 const postMetaValidFragment = `
-	<wp:postmeta>
-		<wp:meta_key>fruit</wp:meta_key>
-		<wp:meta_value>apple</wp:meta_value>
-	</wp:postmeta>
+	<postmeta>
+		<meta_key>fruit</meta_key>
+		<meta_value>apple</meta_value>
+	</postmeta>
 `
 
 func TestDecodePostMeta(t *testing.T) {
@@ -193,7 +193,7 @@ func TestDecodePostMeta(t *testing.T) {
 		want PostMeta
 	}{
 		{"valid postmeta fragment", postMetaValidFragment, PostMeta{
-			XMLName: xml.Name{Space: "wp", Local: "postmeta"},
+			XMLName: xml.Name{Local: "postmeta"},
 			Key:     "fruit",
 			Value:   "apple",
 		}},
@@ -252,13 +252,13 @@ func TestDecodeSite(t *testing.T) {
 }
 
 const termValidFragment = `
-	<wp:term>
-		<wp:term_id>3</wp:term_id>
-		<wp:term_taxonomy>category</wp:term_taxonomy>
-		<wp:term_slug>cat</wp:term_slug>
-		<wp:term_parent>none</wp:term_parent>
-		<wp:term_name>Category</wp:term_name>
-	</wp:term>`
+	<term>
+		<term_id>3</term_id>
+		<term_taxonomy>category</term_taxonomy>
+		<term_slug>cat</term_slug>
+		<term_parent>none</term_parent>
+		<term_name>Category</term_name>
+	</term>`
 
 func TestDecodeTerm(t *testing.T) {
 	tests := []struct {
@@ -267,7 +267,7 @@ func TestDecodeTerm(t *testing.T) {
 		want Term
 	}{
 		{"valid term fragment", termValidFragment, Term{
-			XMLName:  xml.Name{Space: "wp", Local: "term"},
+			XMLName:  xml.Name{Local: "term"},
 			ID:       3,
 			Taxonomy: "category",
 			Slug:     "cat",
