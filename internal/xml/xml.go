@@ -85,11 +85,12 @@ type PostMeta struct {
 
 type RSS struct {
 	XMLName xml.Name `xml:"rss"`
-	Excerpt string   `xml:"xmlns excerpt,attr"`
-	Content string   `xml:"xmlns content,attr"`
-	Wfw     string   `xml:"xmlns wfw,attr"`
-	Dc      string   `xml:"xmlns dc,attr"`
-	Wp      string   `xml:"xmlns wp,attr"`
+	Version string   `xml:"version,attr"`
+	Excerpt string   `xml:"excerpt,attr"`
+	Content string   `xml:"content,attr"`
+	Wfw     string   `xml:"wfw,attr"`
+	Dc      string   `xml:"dc,attr"`
+	Wp      string   `xml:"wp,attr"`
 	Channel Channel  `xml:"channel"`
 }
 
