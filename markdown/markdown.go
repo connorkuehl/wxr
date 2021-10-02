@@ -52,6 +52,14 @@ func (t *TextMonospaced) Markdown() string {
 	return fmt.Sprintf("`%s`", markdownNodes(t.Inner))
 }
 
+type TextStrike struct {
+	Inner []Node
+}
+
+func (t *TextStrike) Markdown() string {
+	return fmt.Sprintf("~%s~", markdownNodes(t.Inner))
+}
+
 type Link struct {
 	Ref   string
 	Inner []Node
@@ -157,6 +165,8 @@ func markdownify(n *html.Node) Node {
 		return handleTagEmphasized(n)
 	case "i":
 		return handleTagEmphasized(n)
+	case "s":
+		return handleTagStrike(n)
 	case "pre":
 		return handleTagPre(n)
 	case "code":
@@ -214,6 +224,10 @@ func handleTagEmphasized(n *html.Node) *TextEmphasized {
 
 func handleTagMonospaced(n *html.Node) *TextMonospaced {
 	return &TextMonospaced{markdownifyChildren(n)}
+}
+
+func handleTagStrike(n *html.Node) *TextStrike {
+	return &TextStrike{markdownifyChildren(n)}
 }
 
 func handleTagPre(n *html.Node) *Code {
