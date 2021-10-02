@@ -100,7 +100,7 @@ type OrderedList struct {
 }
 
 func (o *OrderedList) Markdown() string {
-	s := make([]string, 0, len(o.Nodes))
+	var s []string
 
 	for i, n := range o.Nodes {
 		s = append(s, fmt.Sprintf("%d %s", i, n.Markdown()))
@@ -113,7 +113,7 @@ type UnorderedList struct {
 }
 
 func (u *UnorderedList) Markdown() string {
-	s := make([]string, 0, len(u.Nodes))
+	var s []string
 
 	for _, n := range u.Nodes {
 		s = append(s, fmt.Sprintf("* %s", n.Markdown()))
@@ -135,7 +135,7 @@ type Document struct {
 }
 
 func (d *Document) Markdown() string {
-	s := make([]string, 0, len(d.Nodes))
+	var s []string
 
 	for _, n := range d.Nodes {
 		s = append(s, n.Markdown())
