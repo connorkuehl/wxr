@@ -18,7 +18,7 @@ import (
 	"golang.org/x/net/html"
 
 	"github.com/connorkuehl/wxr"
-	"github.com/connorkuehl/wxr/markdown"
+	"github.com/connorkuehl/wxr/cmd/wxrto/internal/markdown"
 )
 
 var (
