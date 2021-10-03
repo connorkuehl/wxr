@@ -41,7 +41,7 @@ type TextEmphasized struct {
 }
 
 func (t *TextEmphasized) Markdown() string {
-	return fmt.Sprintf("_%s_", markdownNodes(t.Inner))
+	return fmt.Sprintf("*%s*", markdownNodes(t.Inner))
 }
 
 type TextMonospaced struct {
