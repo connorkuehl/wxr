@@ -57,7 +57,7 @@ type TextStrike struct {
 }
 
 func (t *TextStrike) Markdown() string {
-	return fmt.Sprintf("~%s~", markdownNodes(t.Inner))
+	return fmt.Sprintf("~~%s~~", markdownNodes(t.Inner))
 }
 
 type Link struct {
