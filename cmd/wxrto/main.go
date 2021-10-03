@@ -1,4 +1,4 @@
-// Binary wxrto converts a WordPress E(x)tended RSS file into a static
+// Command wxrto converts a WordPress E(x)tended RSS file into a static
 // site.
 package main
 
