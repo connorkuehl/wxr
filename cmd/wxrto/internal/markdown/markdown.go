@@ -103,7 +103,7 @@ func (o *OrderedList) Markdown() string {
 	var s []string
 
 	for i, n := range o.Nodes {
-		s = append(s, fmt.Sprintf("%d %s", i, n.Markdown()))
+		s = append(s, fmt.Sprintf("%d. %s", i+1, n.Markdown()))
 	}
 	return strings.Join(s, "\n")
 }
