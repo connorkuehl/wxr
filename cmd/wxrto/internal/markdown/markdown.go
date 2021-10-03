@@ -33,7 +33,7 @@ type TextStrong struct {
 }
 
 func (t *TextStrong) Markdown() string {
-	return fmt.Sprintf("*%s*", markdownNodes(t.Inner))
+	return fmt.Sprintf("**%s**", markdownNodes(t.Inner))
 }
 
 type TextEmphasized struct {
