@@ -115,6 +115,7 @@ func main() {
 		acquire()
 		go func(r *wxr.RSS, i wxr.Item) {
 			processItem(r, i)
+			release()
 		}(&rss, item)
 	}
 
@@ -125,9 +126,6 @@ func main() {
 // processItem converts a WordPress blog post or static page into a Markdown
 // file that is compatible with the selected generator.
 func processItem(rss *wxr.RSS, item wxr.Item) {
-	// Make sure we release this
-	defer release()
-
 	postType := stripCharData(item.PostType)
 	if postType != "post" && postType != "page" {
 		return
