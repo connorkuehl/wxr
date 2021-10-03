@@ -157,6 +157,8 @@ func markdownify(n *html.Node) Node {
 	}
 
 	switch n.Data {
+	case "a":
+		return handleTagA(n)
 	case "strong":
 		return handleTagStrong(n)
 	case "b":
@@ -279,6 +281,18 @@ func handleTagImg(n *html.Node) *Image {
 	}
 
 	return &Image{Alt: alt, Ref: ref}
+}
+
+func handleTagA(n *html.Node) *Link {
+	var ref string
+
+	for _, a := range n.Attr {
+		if a.Key == "href" {
+			ref = a.Val
+		}
+	}
+
+	return &Link{Ref: ref, Inner: markdownifyChildren(n)}
 }
 
 func handleTagOl(n *html.Node) *OrderedList {
