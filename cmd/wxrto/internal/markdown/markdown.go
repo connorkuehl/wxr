@@ -1,304 +1,144 @@
 package markdown
 
 import (
-	"fmt"
-	"strconv"
-	"strings"
-
 	"golang.org/x/net/html"
 )
 
-type Node interface {
-	Markdown() string
+type NodeKind int
+
+const (
+	NodeUnknown NodeKind = iota
+	NodeHTMLInternal
+	NodeParagraph
+	NodePlainText
+	NodeStrongText
+	NodeEmphasizedText
+	NodeStrikeText
+	NodeMonoText
+	NodeLink
+	NodeHeader
+	NodeImage
+	NodePreformatted
+	NodeUnorderedList
+	NodeOrderedList
+	NodeListItem
+)
+
+const (
+	NodeAttrHref    = "href"
+	NodeHeaderOrder = "head-order"
+	NodeImageSrc    = "img-src"
+	NodeImageAlt    = "img-alt"
+)
+
+type Node struct {
+	Kind        NodeKind
+	Attrs       map[string]string
+	Data        string
+	FirstChild  *Node
+	NextSibling *Node
+	PrevSibling *Node
 }
 
-func markdownNodes(ns []Node) string {
-	var s strings.Builder
-	for _, n := range ns {
-		s.WriteString(n.Markdown())
-	}
-	return s.String()
-}
-
-type TextPlain struct {
-	Value string
-}
-
-func (t *TextPlain) Markdown() string {
-	return t.Value
-}
-
-type TextStrong struct {
-	Inner []Node
-}
-
-func (t *TextStrong) Markdown() string {
-	return fmt.Sprintf("**%s**", markdownNodes(t.Inner))
-}
-
-type TextEmphasized struct {
-	Inner []Node
-}
-
-func (t *TextEmphasized) Markdown() string {
-	return fmt.Sprintf("*%s*", markdownNodes(t.Inner))
-}
-
-type TextMonospaced struct {
-	Inner []Node
-}
-
-func (t *TextMonospaced) Markdown() string {
-	return fmt.Sprintf("`%s`", markdownNodes(t.Inner))
-}
-
-type TextStrike struct {
-	Inner []Node
-}
-
-func (t *TextStrike) Markdown() string {
-	return fmt.Sprintf("~~%s~~", markdownNodes(t.Inner))
-}
-
-type Link struct {
-	Ref   string
-	Inner []Node
-}
-
-func (l *Link) Markdown() string {
-	return fmt.Sprintf("[%s](%s)", markdownNodes(l.Inner), l.Ref)
-}
-
-type Paragraph struct {
-	Nodes []Node
-}
-
-func (p *Paragraph) Markdown() string {
-	return markdownNodes(p.Nodes)
-}
-
-type Header struct {
-	Order int
-	Value string
-}
-
-func (h *Header) Markdown() string {
-	head := "######"[:h.Order]
-	return fmt.Sprintf("%s %s", head, h.Value)
-}
-
-type Code struct {
-	Nodes []Node
-}
-
-func (c *Code) Markdown() string {
-	return strings.Join([]string{"```", markdownNodes(c.Nodes), "```"}, "\n")
-}
-
-type OrderedList struct {
-	Nodes []Node
-}
-
-func (o *OrderedList) Markdown() string {
-	var s []string
-
-	for i, n := range o.Nodes {
-		s = append(s, fmt.Sprintf("%d. %s", i+1, n.Markdown()))
-	}
-	return strings.Join(s, "\n")
-}
-
-type UnorderedList struct {
-	Nodes []Node
-}
-
-func (u *UnorderedList) Markdown() string {
-	var s []string
-
-	for _, n := range u.Nodes {
-		s = append(s, fmt.Sprintf("* %s", n.Markdown()))
-	}
-	return strings.Join(s, "\n")
-}
-
-type Image struct {
-	Ref string
-	Alt string
-}
-
-func (i *Image) Markdown() string {
-	return fmt.Sprintf("![%s](%s)", i.Alt, i.Ref)
-}
-
-type Document struct {
-	Nodes []Node
-}
-
-func (d *Document) Markdown() string {
-	var s []string
-
-	for _, n := range d.Nodes {
-		s = append(s, n.Markdown())
-	}
-	return strings.Join(s, "\n")
-}
-
-func New(n *html.Node) Document {
+func FromHTMLNode(n *html.Node) *Node {
 	if n == nil {
-		return Document{}
+		return nil
 	}
 
-	return Document{markdownifyChildren(n)}
-}
-
-func markdownify(n *html.Node) Node {
-	if n.Type == html.TextNode {
-		return &TextPlain{n.Data}
+	root := &Node{
+		Attrs: make(map[string]string),
 	}
 
-	switch n.Data {
-	case "a":
-		return handleTagA(n)
-	case "strong":
-		return handleTagStrong(n)
-	case "b":
-		return handleTagStrong(n)
-	case "em":
-		return handleTagEmphasized(n)
-	case "i":
-		return handleTagEmphasized(n)
-	case "s":
-		return handleTagStrike(n)
-	case "pre":
-		return handleTagPre(n)
-	case "code":
-		return handleTagMonospaced(n)
-	case "h1":
-		return handleTagH(n)
-	case "h2":
-		return handleTagH(n)
-	case "h3":
-		return handleTagH(n)
-	case "h4":
-		return handleTagH(n)
-	case "h5":
-		return handleTagH(n)
-	case "h6":
-		return handleTagH(n)
-	case "img":
-		return handleTagImg(n)
-	case "ol":
-		return handleTagOl(n)
-	case "ul":
-		return handleTagUl(n)
+	switch n.Type {
+	case html.TextNode:
+		root.Kind = NodePlainText
+		root.Data = n.Data
+	case html.ElementNode:
+		switch n.Data {
+		case "a":
+			root.Kind = NodeLink
+			for _, attr := range n.Attr {
+				if attr.Key == "href" {
+					root.Attrs[NodeAttrHref] = attr.Val
+				}
+			}
+		case "b":
+			root.Kind = NodeStrongText
+		case "strong":
+			root.Kind = NodeStrongText
+		case "i":
+			root.Kind = NodeEmphasizedText
+		case "em":
+			root.Kind = NodeEmphasizedText
+		case "s":
+			root.Kind = NodeStrikeText
+		case "pre":
+			for _, a := range n.Attr {
+				if a.Key == "class" && a.Val == "wp-block-code" {
+					return &Node{
+						Kind: NodePreformatted,
+						FirstChild: &Node{
+							Kind: NodePlainText,
+							Data: n.FirstChild.FirstChild.Data,
+						},
+					}
+				}
+			}
+		case "code":
+			root.Kind = NodeMonoText
+		case "h1":
+			root.Kind = NodeHeader
+			root.Attrs[NodeHeaderOrder] = "1"
+		case "h2":
+			root.Kind = NodeHeader
+			root.Attrs[NodeHeaderOrder] = "2"
+		case "h3":
+			root.Kind = NodeHeader
+			root.Attrs[NodeHeaderOrder] = "3"
+		case "h4":
+			root.Kind = NodeHeader
+			root.Attrs[NodeHeaderOrder] = "4"
+		case "h5":
+			root.Kind = NodeHeader
+			root.Attrs[NodeHeaderOrder] = "5"
+		case "h6":
+			root.Kind = NodeHeader
+			root.Attrs[NodeHeaderOrder] = "6"
+		case "ol":
+			root.Kind = NodeOrderedList
+		case "ul":
+			root.Kind = NodeUnorderedList
+		case "li":
+			root.Kind = NodeListItem
+		case "img":
+			root.Kind = NodeImage
+			for _, attr := range n.Attr {
+				if attr.Key == "src" {
+					root.Attrs[NodeImageSrc] = attr.Val
+				}
+			}
+		}
 	default:
-		return handleTagP(n)
+		root.Kind = NodeHTMLInternal
 	}
 
-	// TODO: figure out best way to communicate error for unhandled tag.
-}
-
-func markdownifyChildren(n *html.Node) []Node {
-	var children []Node
-	if n == nil {
-		return children
-	}
+	var last *Node
 
 	for c := n.FirstChild; c != nil; c = c.NextSibling {
-		if c.Type == html.TextNode || c.Type == html.ElementNode {
-			children = append(children, markdownify(c))
+		r := FromHTMLNode(c)
+		if r == nil {
+			continue
 		}
-	}
-	return children
-}
 
-func handleTagP(n *html.Node) *Paragraph {
-	return &Paragraph{markdownifyChildren(n)}
-}
-
-func handleTagStrong(n *html.Node) *TextStrong {
-	return &TextStrong{markdownifyChildren(n)}
-}
-
-func handleTagEmphasized(n *html.Node) *TextEmphasized {
-	return &TextEmphasized{markdownifyChildren(n)}
-}
-
-func handleTagMonospaced(n *html.Node) *TextMonospaced {
-	return &TextMonospaced{markdownifyChildren(n)}
-}
-
-func handleTagStrike(n *html.Node) *TextStrike {
-	return &TextStrike{markdownifyChildren(n)}
-}
-
-func handleTagPre(n *html.Node) *Code {
-	for _, a := range n.Attr {
-		if a.Key == "class" && a.Val == "wp-block-code" {
-			code := n.FirstChild
-			if code != nil && code.FirstChild != nil {
-				value := []Node{&TextPlain{code.FirstChild.Data}}
-				return &Code{value}
-			}
-		}
-		if a.Key == "class" && a.Val == "wp-block-preformatted" {
-			contents := n.FirstChild
-			if contents != nil {
-				value := []Node{&TextPlain{contents.Data}}
-				return &Code{value}
-			}
+		if root.FirstChild == nil {
+			root.FirstChild = r
+			last = r
+		} else {
+			r.PrevSibling = last
+			last.NextSibling = r
+			last = r
 		}
 	}
 
-	// TODO
-	return &Code{[]Node{}}
-}
-
-func handleTagH(n *html.Node) *Header {
-	order, err := strconv.Atoi(n.Data[1:])
-	if err != nil {
-		order = 1
-	}
-
-	var value string
-	if n.FirstChild != nil {
-		value = n.FirstChild.Data
-	}
-	return &Header{Order: order, Value: value}
-}
-
-func handleTagImg(n *html.Node) *Image {
-	var alt string
-	var ref string
-
-	for _, a := range n.Attr {
-		if a.Key == "src" {
-			ref = a.Val
-		}
-		if a.Key == "alt" {
-			alt = a.Val
-		}
-	}
-
-	return &Image{Alt: alt, Ref: ref}
-}
-
-func handleTagA(n *html.Node) *Link {
-	var ref string
-
-	for _, a := range n.Attr {
-		if a.Key == "href" {
-			ref = a.Val
-		}
-	}
-
-	return &Link{Ref: ref, Inner: markdownifyChildren(n)}
-}
-
-func handleTagOl(n *html.Node) *OrderedList {
-	return &OrderedList{markdownifyChildren(n)}
-}
-
-func handleTagUl(n *html.Node) *UnorderedList {
-	return &UnorderedList{markdownifyChildren(n)}
+	return root
 }

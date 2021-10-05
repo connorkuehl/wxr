@@ -10,6 +10,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"text/template"
@@ -182,8 +183,6 @@ func processItem(rss *wxr.RSS, item wxr.Item) {
 		return
 	}
 
-	mdDoc := markdown.New(htmlDoc)
-
 	// TODO: Either visit the HTML tree or the markdown tree and download
 	// assets to outputDir/contentDir/static. The links will probably have
 	// to be fixed up.
@@ -213,10 +212,73 @@ func processItem(rss *wxr.RSS, item wxr.Item) {
 
 	t := template.Must(template.New(*generator + "-post").Parse(tmpl))
 
+	mdNode := markdown.FromHTMLNode(htmlDoc)
+	markdown := visitMarkdown(mdNode)
+
 	// Write the frontmatter, then the Markdown
 	t.Execute(file, frontmatter)
-	io.Copy(file, strings.NewReader(mdDoc.Markdown()))
+	io.Copy(file, strings.NewReader(markdown))
 	log.Printf("%q => %q", item.Title, filename)
+}
+
+func visitMarkdown(node *markdown.Node) string {
+	visitChildren := func(n *markdown.Node) string {
+		if n == nil {
+			return ""
+		}
+
+		var b strings.Builder
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			b.WriteString(visitMarkdown(c))
+		}
+		return b.String()
+	}
+
+	if node == nil {
+		return ""
+	}
+
+	switch node.Kind {
+	case markdown.NodePlainText:
+		return node.Data
+	case markdown.NodeStrongText:
+		return fmt.Sprintf("**%s**", visitChildren(node))
+	case markdown.NodeEmphasizedText:
+		return fmt.Sprintf("*%s*", visitChildren(node))
+	case markdown.NodeStrikeText:
+		return fmt.Sprintf("~~%s~~", visitChildren(node))
+	case markdown.NodeMonoText:
+		return fmt.Sprintf("`%s`", visitChildren(node))
+	case markdown.NodeLink:
+		return fmt.Sprintf("[%s](%s)", visitChildren(node), node.Attrs[markdown.NodeAttrHref])
+	case markdown.NodeHeader:
+		var level int
+		level, err := strconv.Atoi(node.Attrs[markdown.NodeHeaderOrder])
+		if err != nil {
+			level = 1
+		}
+		return fmt.Sprintf("%s %s", "######"[:level], visitChildren(node))
+	case markdown.NodeImage:
+		return fmt.Sprintf("![%s](%s)", node.Attrs[markdown.NodeImageAlt], node.Attrs[markdown.NodeImageSrc])
+	case markdown.NodePreformatted:
+		return fmt.Sprintf("```%s```", visitChildren(node))
+	case markdown.NodeUnorderedList:
+		var s []string
+		for c := node.FirstChild; c != nil; c = c.NextSibling {
+			s = append(s, fmt.Sprintf("* %s", visitChildren(c)))
+		}
+		return strings.Join(s, "\n")
+	case markdown.NodeOrderedList:
+		var s []string
+		i := 1
+		for c := node.FirstChild; c != nil; c = c.NextSibling {
+			s = append(s, fmt.Sprintf("%d. %s", i, visitChildren(c)))
+			i += 1
+		}
+		return strings.Join(s, "\n")
+	default:
+		return visitChildren(node)
+	}
 }
 
 // TODO: Fixup the wxr/xml package to parse out the chardata
