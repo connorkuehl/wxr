@@ -23,18 +23,6 @@ import (
 )
 
 var (
-	// numTokens limits the number of concurrent conversions.
-	numTokens = 16
-
-	// tokens is used as a lock that each conversion goroutine must
-	// acquire before running (it must also release it when it's done).
-	// See acquire() and release().
-	tokens = make(chan struct{}, numTokens)
-
-	// acquired tracks running converter goroutines. It is updated
-	// as part of acquire() and release().
-	acquired sync.WaitGroup
-
 	// inputFile is the path to the WordPress E(x)tended RSS file that
 	// will be decomposed into Markdown files for a static site generator.
 	inputFile *string
@@ -64,23 +52,6 @@ func init() {
 	generator = flag.String("generator", "hugo", "static site generator output format")
 	outputDir = flag.String("outdir", "output", "directory to save converted files and assets")
 	flag.Parse()
-
-	// Populate the pool of tokens outright to avoid deadlock
-	for i := 0; i < numTokens; i++ {
-		tokens <- struct{}{}
-	}
-}
-
-// acquire must be called before starting a converter goroutine.
-func acquire() {
-	<-tokens
-	acquired.Add(1)
-}
-
-// release must be called by a goroutine before it exits.
-func release() {
-	acquired.Done()
-	tokens <- struct{}{}
 }
 
 func main() {
@@ -111,17 +82,19 @@ func main() {
 		log.Fatal(err)
 	}
 
+	var wg sync.WaitGroup
+
 	for _, item := range rss.Channel.Items {
 		// The processItem goroutine will release the lock before returning
-		acquire()
+		wg.Add(1)
 		go func(r *wxr.RSS, i wxr.Item) {
+			defer wg.Done()
 			processItem(r, i)
-			release()
 		}(&rss, item)
 	}
 
 	// Wait for any dispatched goroutines to finish up before exiting
-	acquired.Wait()
+	wg.Wait()
 }
 
 // processItem converts a WordPress blog post or static page into a Markdown
